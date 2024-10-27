@@ -14,6 +14,22 @@ mod tests {
     fn is_diff<T: cache_diff::CacheDiff>(_in: &T) {}
 
     #[test]
+    fn test_replace_space() {
+        #[derive(CacheDiff)]
+        struct Metadata {
+            ruby_version: String,
+        }
+        let metadata = Metadata {
+            ruby_version: "3.4.0".to_string(),
+        };
+        let diff = metadata.diff(&Metadata {
+            ruby_version: "3.3.0".to_string(),
+        });
+        assert_eq!(diff.len(), 1);
+        assert!(diff.join(" ").contains("ruby version"));
+    }
+
+    #[test]
     fn test_cache_diff() {
         #[derive(CacheDiff)]
         struct Person {

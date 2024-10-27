@@ -16,8 +16,10 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
         _ => unimplemented!("Only implemented for structs"),
     };
     let comparisons = fields.iter().map(|f| {
-        let name = &f.ident;
-        // TODO: Replace `_` and `-` with spaces
+        let field_name = &f.ident;
+        let mut display = field_name.as_ref().unwrap().to_string();
+        display = display.replace("_", " ");
+
         // TODO: Wrap with bullet_stream::style::value
         // TODO: Rename attribute `cache_diff(rename = "Ruby version" )`
         // TODO: Ignore attribute `cache_diff(ignore)`
@@ -28,8 +30,8 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
         //
         //         `cache_diff(display = PathBuff::display)`
         quote! {
-            if self.#name != old.#name {
-                differences.push(format!("#name"))
+            if self.#field_name != old.#field_name {
+                differences.push(#display.to_string())
             }
         }
     });
