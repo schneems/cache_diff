@@ -17,6 +17,16 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
     };
     let comparisons = fields.iter().map(|f| {
         let name = &f.ident;
+        // TODO: Replace `_` and `-` with spaces
+        // TODO: Wrap with bullet_stream::style::value
+        // TODO: Rename attribute `cache_diff(rename = "Ruby version" )`
+        // TODO: Ignore attribute `cache_diff(ignore)`
+        // TODO: Handle attributes that don't directly `impl Display``
+        //       like PathBuf. We could special case the most common
+        //       or do something like thiserr but the DSL would be odd
+        //       Maybe something like:
+        //
+        //         `cache_diff(display = PathBuff::display)`
         quote! {
             if self.#name != old.#name {
                 differences.push(format!("#name"))
