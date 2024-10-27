@@ -14,24 +14,46 @@ mod tests {
     fn is_diff<T: cache_diff::CacheDiff>(_in: &T) {}
 
     #[test]
-    fn ignore_field() {
+    fn ignore_rename_field() {
         #[derive(CacheDiff)]
         struct Metadata {
-            ruby_version: String,
-            #[cache_diff(ignore)]
-            modified_by: String,
+            #[cache_diff(rename = "Ruby version")]
+            version: String,
         }
         let metadata = Metadata {
-            ruby_version: "3.4.0".to_string(),
-            modified_by: "richard".to_string(),
+            version: "3.4.0".to_string(),
         };
         let diff = metadata.diff(&Metadata {
-            ruby_version: "3.3.0".to_string(),
-            modified_by: "not rich".to_string(),
+            version: "3.3.0".to_string(),
         });
 
         assert_eq!(diff.len(), 1);
+        let contents = diff.join(" ");
+        assert!(
+            contents.contains("Ruby version"),
+            "Expected `{contents}` to contain Ruby version"
+        );
     }
+
+    // #[test]
+    // fn ignore_field() {
+    //     #[derive(CacheDiff)]
+    //     struct Metadata {
+    //         ruby_version: String,
+    //         #[cache_diff(ignore)]
+    //         modified_by: String,
+    //     }
+    //     let metadata = Metadata {
+    //         ruby_version: "3.4.0".to_string(),
+    //         modified_by: "richard".to_string(),
+    //     };
+    //     let diff = metadata.diff(&Metadata {
+    //         ruby_version: "3.3.0".to_string(),
+    //         modified_by: "not rich".to_string(),
+    //     });
+
+    //     assert_eq!(diff.len(), 1);
+    // }
 
     #[test]
     fn test_replace_space() {

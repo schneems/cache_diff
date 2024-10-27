@@ -1,9 +1,25 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Data::Struct;
-use syn::DeriveInput;
 use syn::Fields::Named;
-use syn::{DataStruct, FieldsNamed};
+use syn::{DataStruct, Expr, ExprLit, FieldsNamed, Lit, MetaNameValue};
+use syn::{DeriveInput, Field};
+
+fn extract_attribute_from_field<'a>(f: &'a Field, name: &'a str) -> Option<&'a syn::Attribute> {
+    f.attrs.iter().find(|&attr| attr.path().is_ident(name))
+}
+
+fn match_expr_as_lit_str(expr: &Expr) -> Option<String> {
+    if let Expr::Lit(ExprLit {
+        lit: Lit::Str(lit_str),
+        ..
+    }) = expr
+    {
+        Some(lit_str.value())
+    } else {
+        None
+    }
+}
 
 pub fn create_cache_diff(item: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse2(item).unwrap();
@@ -17,7 +33,29 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
     };
     let comparisons = fields.iter().map(|f| {
         let field_name = &f.ident;
-        let mut display = field_name.as_ref().unwrap().to_string();
+        let rename = extract_attribute_from_field(f, "cache_diff")
+            .map(|a| &a.meta)
+            .and_then(|m| match m {
+                syn::Meta::Path(_) => panic!("Not supported, TODO better message"),
+                syn::Meta::List(meta_list) => {
+                    if let Ok(name_value) = meta_list.parse_args::<MetaNameValue>() {
+                        if name_value.path.is_ident("rename") {
+                            if let Some(value) = match_expr_as_lit_str(&name_value.value) {
+                                Some(value)
+                            } else {
+                                panic!("Expected a string literal")
+                            }
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                }
+                syn::Meta::NameValue(_) => panic!("Not supported, TODO better message"),
+            });
+
+        let mut display = rename.unwrap_or_else(|| field_name.as_ref().unwrap().to_string());
         display = display.replace("_", " ");
 
         // TODO: Wrap with bullet_stream::style::value
