@@ -4,3 +4,5 @@ members = [
     "cache_diff",
     "cache_diff_derive",
 ]
+
+resolver = "2"
