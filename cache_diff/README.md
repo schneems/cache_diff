@@ -1,16 +1,17 @@
 <!--
-    This readme is created with https://github.com/livioribeiro/cargo-readme
-
+    This readme is created with https://crates.io/crates/cargo-rdme
 
     To update: edit `cargo_diff/src/lib.rs` then run:
 
     ```
     $ cd cargo_diff
-    $ cargo readme > README.md
+    $ cargo rdme > README.md
     ```
 -->
 
 # cache_diff
+
+<!-- cargo-rdme start -->
 
 Generate clean, human readable diffs between two cache structs
 
@@ -34,6 +35,18 @@ a serializable struct to represent the state of a cache. When that data changes,
 cache, but also report back to the user what changed.
 
 Due to the CNB layer implementation, this struct is often called "metadata".
+
+### Install
+
+```shell
+$ cargo add cache_diff
+```
+
+For ANSI colored output, add the `bullet_stream` feature:
+
+```shell
+$ cargo add cache_diff --features bullet_stream
+```
 
 ### Derive usage
 
@@ -140,3 +153,5 @@ let diff = now.diff(&Metadata { version: NoDisplay("3.3.0".to_string())});
 
 assert_eq!(diff.join(" "), "version (`custom 3.3.0` to `custom 3.4.0`)");
 ```
+
+<!-- cargo-rdme end -->
