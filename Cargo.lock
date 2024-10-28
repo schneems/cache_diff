@@ -3,9 +3,16 @@
 version = 3
 
 [[package]]
+name = "bullet_stream"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e038a9e6b7e36319ab42141434b0c7a93f7714aa90abf63cc5086e106027bb7"
+
+[[package]]
 name = "cache_diff"
 version = "0.1.0"
 dependencies = [
+ "bullet_stream",
  "cache_diff_derive",
 ]
 
@@ -13,6 +20,7 @@ dependencies = [
 name = "cache_diff_derive"
 version = "0.1.0"
 dependencies = [
+ "bullet_stream",
  "proc-macro2",
  "quote",
  "syn",
