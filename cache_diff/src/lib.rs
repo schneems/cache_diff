@@ -1,4 +1,6 @@
-//! # Generate clean, human readable diffs between two cache structs
+//! # CacheDiff
+//!
+//! Generate clean, human readable diffs between two cache structs
 //!
 //! ## What
 //!
@@ -19,9 +21,12 @@
 //! a serializable struct to represent the state of a cache. When that data changes, we need to invalidate the
 //! cache, but also report back to the user what changed.
 //!
-//! ## Default usage
+//! Due to the CNB layer implementation, this struct is often called "metadata".
 //!
-//! Struct fields must be `PartialEq` and `Display`:
+//! ## Derive usage
+//!
+//! By default a `#[derive(CacheDiff)]` will generate a `diff` function that compares each field in the struct.
+//! You can disable this dependency by specifying `features = []`.
 //!
 //! ```rust
 //! use cache_diff::CacheDiff;
@@ -36,8 +41,9 @@
 //! assert_eq!(diff.join(" "), "version (`3.3.0` to `3.4.0`)");
 //! ```
 //!
-//! Note that `PartialEq` on the top level cache struct is not required or used. If you want to customize
-//! equality logic, you can implement the `CacheDiff` trait manually.
+//! Struct fields must implement `PartialEq` and `Display`. Also note that `PartialEq` on the top level
+//! cache struct is not  used or required. If you want to customize equality logic, you can implement
+//! the `CacheDiff` trait manually.
 //!
 //! ## Ordering
 //!
