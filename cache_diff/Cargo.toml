@@ -1,7 +1,7 @@
 [package]
 name = "cache_diff"
 description = "Generate clean, human readable diffs between two cache structs"
-include = ["src/**/*", "LICENSE.md", "README.md"]
+include = ["src/**/*", "LICENSE.md"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
