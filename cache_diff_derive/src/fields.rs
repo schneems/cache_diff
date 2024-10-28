@@ -104,10 +104,9 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
             .map(CacheAttributes::parse_all)
             .unwrap_or_else(|| Ok(CacheAttributes::default()))?;
 
-        let mut name = attributes
+        let name = attributes
             .rename
-            .unwrap_or_else(|| field_name.as_ref().unwrap().to_string());
-        name = name.replace("_", " ");
+            .unwrap_or_else(|| field_name.as_ref().unwrap().to_string().replace("_", " "));
 
         let display = attributes.display.unwrap_or_else(|| {
             if is_pathbuf(&f.ty) {
