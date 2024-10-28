@@ -1,24 +1,89 @@
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::punctuated::Punctuated;
 use syn::Data::Struct;
 use syn::Fields::Named;
-use syn::{DataStruct, Expr, ExprLit, FieldsNamed, Lit, MetaNameValue};
+use syn::{Attribute, DataStruct, FieldsNamed, Ident, PathArguments, Token};
 use syn::{DeriveInput, Field};
+
+#[derive(Debug, PartialEq, Eq, Default)]
+struct CacheAttributes {
+    rename: Option<String>,
+    display: Option<syn::Path>,
+    ignore: Option<()>,
+}
+
+impl CacheAttributes {
+    // Parse all attributes inside of `#[cache_diff(...)]` and return a single CacheAttributes value
+    fn parse_all(input: &Attribute) -> syn::Result<Self> {
+        let mut attribute = CacheAttributes::default();
+
+        match &input.meta {
+            syn::Meta::List(meta_list) => {
+                for attr in meta_list
+                    .parse_args_with(Punctuated::<CacheAttributes, Token![,]>::parse_terminated)?
+                {
+                    if let Some(value) = attr.rename {
+                        attribute.rename = Some(value);
+                    }
+                    if let Some(display) = attr.display {
+                        attribute.display = Some(display);
+                    }
+                    if let Some(ignore) = attr.ignore {
+                        attribute.ignore = Some(ignore);
+                    }
+                }
+                Ok(attribute)
+            }
+            _ => Err(syn::Error::new(
+                input.pound_token.span,
+                "Expected a list of attributes",
+            )),
+        }
+    }
+}
+
+impl syn::parse::Parse for CacheAttributes {
+    // Parse a single attribute inside of a `#[cache_diff(...)]` attribute
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let name: Ident = input.parse()?;
+        let name_str = name.to_string();
+        let mut attribute = CacheAttributes::default();
+        match name.to_string().as_ref() {
+            "rename" => {
+                input.parse::<syn::Token![=]>()?;
+                let value = input.parse::<syn::LitStr>()?;
+                attribute.rename = Some(value.value());
+            }
+            "display" => {
+                input.parse::<syn::Token![=]>()?;
+                attribute.display = Some(input.parse()?);
+            }
+            "ignore" => {
+                attribute.ignore = Some(());
+            }
+            _ => {
+                return Err(syn::Error::new(
+                    name.span(),
+                    format!("Unknown attribute: {}", name_str),
+                ))
+            }
+        }
+        Ok(attribute)
+    }
+}
 
 fn extract_attribute_from_field<'a>(f: &'a Field, name: &'a str) -> Option<&'a syn::Attribute> {
     f.attrs.iter().find(|&attr| attr.path().is_ident(name))
 }
 
-fn match_expr_as_lit_str(expr: &Expr) -> Option<String> {
-    if let Expr::Lit(ExprLit {
-        lit: Lit::Str(lit_str),
-        ..
-    }) = expr
-    {
-        Some(lit_str.value())
-    } else {
-        None
+fn is_pathbuf(ty: &syn::Type) -> bool {
+    if let syn::Type::Path(type_path) = ty {
+        if let Some(segment) = type_path.path.segments.last() {
+            return segment.ident == "PathBuf" && segment.arguments == PathArguments::None;
+        }
     }
+    false
 }
 
 pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
@@ -31,48 +96,46 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         }) => named,
         _ => unimplemented!("Only implemented for structs"),
     };
-    let comparisons = fields.iter().map(|f| {
+    let mut comparisons = Vec::new();
+    for f in fields.iter() {
         let field_name = &f.ident;
-        let rename = extract_attribute_from_field(f, "cache_diff")
-            .map(|a| &a.meta)
-            .and_then(|m| match m {
-                syn::Meta::Path(_) => panic!("Not supported, TODO better message"),
-                syn::Meta::List(meta_list) => {
-                    if let Ok(name_value) = meta_list.parse_args::<MetaNameValue>() {
-                        if name_value.path.is_ident("rename") {
-                            if let Some(value) = match_expr_as_lit_str(&name_value.value) {
-                                Some(value)
-                            } else {
-                                panic!("Expected a string literal")
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                }
-                syn::Meta::NameValue(_) => panic!("Not supported, TODO better message"),
-            });
 
-        let mut display = rename.unwrap_or_else(|| field_name.as_ref().unwrap().to_string());
-        display = display.replace("_", " ");
+        let attributes = extract_attribute_from_field(f, "cache_diff")
+            .map(CacheAttributes::parse_all)
+            .unwrap_or_else(|| Ok(CacheAttributes::default()))?;
 
-        // TODO: Wrap with bullet_stream::style::value
-        // TODO: Rename attribute `cache_diff(rename = "Ruby version" )`
-        // TODO: Ignore attribute `cache_diff(ignore)`
-        // TODO: Handle attributes that don't directly `impl Display``
-        //       like PathBuf. We could special case the most common
-        //       or do something like thiserr but the DSL would be odd
-        //       Maybe something like:
-        //
-        //         `cache_diff(display = PathBuff::display)`
-        quote! {
-            if self.#field_name != old.#field_name {
-                differences.push(#display.to_string())
+        let mut name = attributes
+            .rename
+            .unwrap_or_else(|| field_name.as_ref().unwrap().to_string());
+        name = name.replace("_", " ");
+
+        let display = attributes.display.unwrap_or_else(|| {
+            if is_pathbuf(&f.ty) {
+                syn::parse_str("PathBuf::display").expect("PathBuf::display parses as a syn::Path")
+            } else {
+                syn::parse_str("std::convert::identity")
+                    .expect("std::convert::identity parses as a syn::Path")
             }
+        });
+
+        if attributes.ignore.is_none() {
+            comparisons.push(quote! {
+                if self.#field_name != old.#field_name {
+                    differences.push(format!("{} (`{}` to `{}`)", #name, #display(&self.#field_name), #display(&old.#field_name)));
+                }
+            })
         }
-    });
+    }
+
+    // TODO: Wrap with bullet_stream::style::value
+    // TODO: Rename attribute `cache_diff(rename = "Ruby version" )`
+    // TODO: Ignore attribute `cache_diff(ignore)`
+    // TODO: Handle attributes that don't directly `impl Display``
+    //       like PathBuf. We could special case the most common
+    //       or do something like thiserr but the DSL would be odd
+    //       Maybe something like:
+    //
+    //         `cache_diff(display = PathBuff::display)`
 
     Ok(quote! {
         #[allow(unused_extern_crates, clippy::useless_attribute)]

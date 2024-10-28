@@ -14,6 +14,31 @@ mod tests {
     fn is_diff<T: cache_diff::CacheDiff>(_in: &T) {}
 
     #[test]
+    fn ignore_rename_display_field() {
+        fn my_display(value: &String) -> String {
+            format!("custom {value}")
+        }
+        #[derive(CacheDiff)]
+        struct Metadata {
+            #[cache_diff(rename="Ruby version", display=my_display)]
+            version: String,
+        }
+        let metadata = Metadata {
+            version: "3.4.0".to_string(),
+        };
+        let diff = metadata.diff(&Metadata {
+            version: "3.3.0".to_string(),
+        });
+
+        assert_eq!(diff.len(), 1);
+        let contents = diff.join(" ");
+        assert!(
+            contents.contains("custom 3.4.0"),
+            "Expected `{contents}` to contain 'custom 3.4.0'"
+        );
+    }
+
+    #[test]
     fn ignore_rename_field() {
         #[derive(CacheDiff)]
         struct Metadata {
