@@ -1,5 +1,3 @@
-//! # CacheDiff
-//!
 //! Generate clean, human readable diffs between two cache structs
 //!
 //! ## What
