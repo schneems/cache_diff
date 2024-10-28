@@ -1,7 +1,13 @@
 [package]
 name = "cache_diff_derive"
-version = "0.1.0"
-edition = "2021"
+description = "Macros for cache_diff"
+include = ["src/**/*", "LICENSE.md", "README.md"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
 
 [dependencies]
 quote = "1.0.33"
