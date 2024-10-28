@@ -1,0 +1,9 @@
+error[E0277]: `NotDisplay` doesn't implement `std::fmt::Display`
+ --> tests/fails/missing_display.rs:5:10
+  |
+5 | #[derive(CacheDiff)]
+  |          ^^^^^^^^^ `NotDisplay` cannot be formatted with the default formatter
+  |
+  = help: the trait `std::fmt::Display` is not implemented for `NotDisplay`, which is required by `&NotDisplay: std::fmt::Display`
+  = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+  = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the derive macro `CacheDiff` (in Nightly builds, run with -Z macro-backtrace for more info)
