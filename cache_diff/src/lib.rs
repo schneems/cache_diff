@@ -156,6 +156,9 @@ pub trait CacheDiff {
         bullet_stream::style::value(value.to_string())
     }
 
+    /// How values are displayed in the diff output, the default is to wrap them in backticks
+    ///
+    /// Enable ANSI colors with `features = ["bullet_stream"]`
     #[cfg(not(feature = "bullet_stream"))]
     fn fmt_value<T: std::fmt::Display>(&self, value: &T) -> String {
         format!("`{}`", value)
