@@ -20,6 +20,7 @@ mod tests {
         struct Metadata {
             ruby_version: String,
             #[cache_diff(ignore)]
+            #[allow(dead_code)]
             _modified_by: String,
         }
 
