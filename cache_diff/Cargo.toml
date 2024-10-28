@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cache_diff_derive = { path = "../cache_diff_derive" }
+cache_diff_derive = { version = "0", optional = true, path = "../cache_diff_derive" }
+
+[features]
+default = ["derive"]
+derive = ["dep:cache_diff_derive"]
