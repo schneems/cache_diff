@@ -10,8 +10,56 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     fn is_diff<T: cache_diff::CacheDiff>(_in: &T) {}
+
+    #[test]
+    fn ignore_a_field() {
+        #[derive(CacheDiff)]
+        struct Metadata {
+            ruby_version: String,
+            #[cache_diff(ignore)]
+            _modified_by: String,
+        }
+
+        let metadata = Metadata {
+            ruby_version: "3.4.0".to_string(),
+            _modified_by: "richard".to_string(),
+        };
+
+        let diff = metadata.diff(&Metadata {
+            ruby_version: "3.3.0".to_string(),
+            _modified_by: "not rich".to_string(),
+        });
+        assert_eq!(diff.len(), 1);
+        let contents = diff.join(" ");
+        assert!(
+            !contents.contains("modified"),
+            "Unexpected contents {contents}"
+        );
+    }
+
+    #[test]
+    fn auto_display_path_buff() {
+        #[derive(CacheDiff)]
+        struct Metadata {
+            path: PathBuf,
+        }
+        let metadata = Metadata {
+            path: PathBuf::from("/tmp"),
+        };
+        let diff = metadata.diff(&Metadata {
+            path: PathBuf::from("/tmp2"),
+        });
+
+        assert_eq!(diff.len(), 1);
+        let contents = diff.join(" ");
+        assert!(
+            contents.contains("/tmp"),
+            "Unexpected contents '{contents}'"
+        );
+    }
 
     #[test]
     fn ignore_rename_display_field() {

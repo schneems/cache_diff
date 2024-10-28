@@ -111,7 +111,8 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
 
         let display = attributes.display.unwrap_or_else(|| {
             if is_pathbuf(&f.ty) {
-                syn::parse_str("PathBuf::display").expect("PathBuf::display parses as a syn::Path")
+                syn::parse_str("std::path::Path::display")
+                    .expect("PathBuf::display parses as a syn::Path")
             } else {
                 syn::parse_str("std::convert::identity")
                     .expect("std::convert::identity parses as a syn::Path")
@@ -121,22 +122,19 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         if attributes.ignore.is_none() {
             comparisons.push(quote! {
                 if self.#field_name != old.#field_name {
-                    differences.push(format!("{} (`{}` to `{}`)", #name, #display(&self.#field_name), #display(&old.#field_name)));
+                    differences.push(
+                        format!("{name} (`{old}` to `{now}`)",
+                            name = #name,
+                            old = #display(&old.#field_name),
+                            now = #display(&self.#field_name)
+                        )
+                    );
                 }
             })
         }
     }
 
     // TODO: Wrap with bullet_stream::style::value
-    // TODO: Rename attribute `cache_diff(rename = "Ruby version" )`
-    // TODO: Ignore attribute `cache_diff(ignore)`
-    // TODO: Handle attributes that don't directly `impl Display``
-    //       like PathBuf. We could special case the most common
-    //       or do something like thiserr but the DSL would be odd
-    //       Maybe something like:
-    //
-    //         `cache_diff(display = PathBuff::display)`
-
     Ok(quote! {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate cache_diff as _cache_diff;
