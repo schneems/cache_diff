@@ -5,5 +5,7 @@ mod fields;
 
 #[proc_macro_derive(CacheDiff, attributes(cache_diff))]
 pub fn cache_diff(item: TokenStream) -> TokenStream {
-    create_cache_diff(item.into()).into()
+    create_cache_diff(item.into())
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }

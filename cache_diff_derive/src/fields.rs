@@ -21,7 +21,7 @@ fn match_expr_as_lit_str(expr: &Expr) -> Option<String> {
     }
 }
 
-pub fn create_cache_diff(item: TokenStream) -> TokenStream {
+pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
     let ast: DeriveInput = syn::parse2(item).unwrap();
     let name = ast.ident;
     let fields = match ast.data {
@@ -74,7 +74,7 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
         }
     });
 
-    quote! {
+    Ok(quote! {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate cache_diff as _cache_diff;
         impl _cache_diff::CacheDiff for #name {
@@ -84,7 +84,7 @@ pub fn create_cache_diff(item: TokenStream) -> TokenStream {
                 differences
             }
         }
-    }
+    })
 }
 
 // #[allow(unused_extern_crates, clippy::useless_attribute)]
