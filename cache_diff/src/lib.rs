@@ -21,6 +21,18 @@
 //!
 //! Due to the CNB layer implementation, this struct is often called "metadata".
 //!
+//! ## Install
+//!
+//! ```shell
+//! $ cargo add cache_diff
+//! ```
+//!
+//! For ANSI colored output, add the `bullet_stream` feature:
+//!
+//! ```shell
+//! $ cargo add cache_diff --features bullet_stream
+//! ```
+//!
 //! ## Derive usage
 //!
 //! By default a `#[derive(CacheDiff)]` will generate a `diff` function that compares each field in the struct.
@@ -138,5 +150,15 @@ pub trait CacheDiff {
     /// cache should be retained (not invalidated). One or more items would indicate that
     /// the cached value should be invalidated.
     fn diff(&self, old: &Self) -> Vec<String>;
+
+    #[cfg(feature = "bullet_stream")]
+    fn fmt_value<T: std::fmt::Display>(&self, value: &T) -> String {
+        bullet_stream::style::value(value.to_string())
+    }
+
+    #[cfg(not(feature = "bullet_stream"))]
+    fn fmt_value<T: std::fmt::Display>(&self, value: &T) -> String {
+        format!("`{}`", value)
+    }
 }
 pub use cache_diff_derive::CacheDiff;

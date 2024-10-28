@@ -129,10 +129,10 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
             comparisons.push(quote! {
                 if self.#field_name != old.#field_name {
                     differences.push(
-                        format!("{name} (`{old}` to `{now}`)",
+                        format!("{name} ({old} to {now})",
                             name = #name,
-                            old = #display(&old.#field_name),
-                            now = #display(&self.#field_name)
+                            old = self.fmt_value(&#display(&old.#field_name)),
+                            now = self.fmt_value(&#display(&self.#field_name))
                         )
                     );
                 }
@@ -140,7 +140,6 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         }
     }
 
-    // TODO: Wrap with bullet_stream::style::value
     Ok(quote! {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate cache_diff as _cache_diff;
