@@ -6,15 +6,22 @@ use syn::Fields::Named;
 use syn::{Attribute, DataStruct, FieldsNamed, Ident, PathArguments, Token};
 use syn::{DeriveInput, Field};
 
+/// Holds the one or more attributes from `#[cache_diff(...)]` attribute configurationo
+///
 #[derive(Debug, PartialEq, Eq, Default)]
 struct CacheAttributes {
+    /// When present indicates the given string should be used as a name instead of the field name
     rename: Option<String>,
+
+    /// When present indicates the given path to a function should be used to customize the display of the field value
     display: Option<syn::Path>,
+
+    /// When `Some` indicates the field should be ignored in the diff comparison
     ignore: Option<()>,
 }
 
 impl CacheAttributes {
-    // Parse all attributes inside of `#[cache_diff(...)]` and return a single CacheAttributes value
+    /// Parse all attributes inside of `#[cache_diff(...)]` and return a single CacheAttributes value
     fn parse_all(input: &Attribute) -> syn::Result<Self> {
         let mut attribute = CacheAttributes::default();
 
@@ -146,12 +153,3 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         }
     })
 }
-
-// #[allow(unused_extern_crates, clippy::useless_attribute)]
-// extern crate cache_diff::CacheDiff as _cache_diff;
-
-// impl _cache_diff for #name {
-//     fn diff(&self, old: &Self) -> Vec<String> {
-//         Vec::new()
-//     }
-// }
