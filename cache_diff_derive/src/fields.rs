@@ -1,5 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::str::FromStr;
+use strum::IntoEnumIterator;
 use syn::punctuated::Punctuated;
 use syn::Data::Struct;
 use syn::Fields::Named;
@@ -50,30 +52,46 @@ impl CacheAttributes {
     }
 }
 
+/// Valid keys for the `#[cache_diff(...)]` attribute
+///
+/// Used in parsing the user input and validating it
+#[derive(Debug, strum::EnumIter, strum::EnumString, PartialEq, strum::Display)]
+#[allow(non_camel_case_types)]
+enum AttributeKey {
+    rename,  // #[cache_diff(rename="...")]
+    display, // #[cache_diff(display="...")]
+    ignore,  // #[cache_diff(ignore)]
+}
+
 impl syn::parse::Parse for CacheAttributes {
     // Parse a single attribute inside of a `#[cache_diff(...)]` attribute
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let name: Ident = input.parse()?;
         let name_str = name.to_string();
         let mut attribute = CacheAttributes::default();
-        match name.to_string().as_ref() {
-            "rename" => {
+        match AttributeKey::from_str(&name_str).map_err(|_| {
+            syn::Error::new(
+                name.span(),
+                format!(
+                    "Unknown attribute: {name_str}. Must be one of {}",
+                    AttributeKey::iter()
+                        .map(|k| format!("`{k}`"))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ),
+            )
+        })? {
+            AttributeKey::rename => {
                 input.parse::<syn::Token![=]>()?;
                 let value = input.parse::<syn::LitStr>()?;
                 attribute.rename = Some(value.value());
             }
-            "display" => {
+            AttributeKey::display => {
                 input.parse::<syn::Token![=]>()?;
                 attribute.display = Some(input.parse()?);
             }
-            "ignore" => {
+            AttributeKey::ignore => {
                 attribute.ignore = Some(());
-            }
-            _ => {
-                return Err(syn::Error::new(
-                    name.span(),
-                    format!("Unknown attribute: {}", name_str),
-                ))
             }
         }
         Ok(attribute)
