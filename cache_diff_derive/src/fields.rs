@@ -3,11 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Data::Struct;
 use syn::Fields::Named;
-use syn::{DataStruct, DeriveInput, Field, FieldsNamed, PathArguments};
-
-fn extract_attribute_from_field<'a>(f: &'a Field, name: &'a str) -> Option<&'a syn::Attribute> {
-    f.attrs.iter().find(|&attr| attr.path().is_ident(name))
-}
+use syn::{DataStruct, DeriveInput, FieldsNamed, PathArguments};
 
 fn is_pathbuf(ty: &syn::Type) -> bool {
     if let syn::Type::Path(type_path) = ty {
@@ -30,12 +26,9 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
     };
     let mut comparisons = Vec::new();
     for f in fields.iter() {
-        let field_name = &f.ident;
+        let field_name: &Option<syn::Ident> = &f.ident;
 
-        let attributes = extract_attribute_from_field(f, "cache_diff")
-            .map(CacheAttributes::parse_all)
-            .unwrap_or_else(|| Ok(CacheAttributes::default()))?;
-
+        let attributes = CacheAttributes::from(f)?;
         let name = attributes
             .rename
             .unwrap_or_else(|| field_name.as_ref().unwrap().to_string().replace("_", " "));

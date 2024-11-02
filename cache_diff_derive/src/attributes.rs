@@ -2,7 +2,7 @@
 //!
 use std::str::FromStr;
 use strum::IntoEnumIterator;
-use syn::{punctuated::Punctuated, Attribute, Ident, Token};
+use syn::{punctuated::Punctuated, Attribute, Field, Ident, Token};
 
 /// Valid keys for the `#[cache_diff(...)]` attribute
 ///
@@ -41,8 +41,20 @@ pub(crate) struct CacheAttributes {
 }
 
 impl CacheAttributes {
+    pub(crate) fn from(field: &Field) -> syn::Result<Self> {
+        if let Some(attributes) = field
+            .attrs
+            .iter()
+            .find(|&attr| attr.path().is_ident("cache_diff"))
+        {
+            CacheAttributes::parse_all(attributes)
+        } else {
+            Ok(CacheAttributes::default())
+        }
+    }
+
     /// Parse all attributes inside of `#[cache_diff(...)]` and return a single CacheAttributes value
-    pub(crate) fn parse_all(input: &Attribute) -> syn::Result<Self> {
+    fn parse_all(input: &Attribute) -> syn::Result<Self> {
         let mut attribute = CacheAttributes::default();
 
         match &input.meta {
