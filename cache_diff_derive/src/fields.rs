@@ -1,6 +1,7 @@
 use crate::attributes::CacheAttributes;
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::spanned::Spanned;
 use syn::Data::Struct;
 use syn::Fields::Named;
 use syn::{DataStruct, DeriveInput, FieldsNamed, PathArguments};
@@ -27,13 +28,21 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
     let mut comparisons = Vec::new();
     for f in fields.iter() {
         let field_name: &Option<syn::Ident> = &f.ident;
+        let default_name = field_name
+            .as_ref()
+            .ok_or_else(|| {
+                syn::Error::new(
+                    f.span(),
+                    "CacheDiff can only be used on structs with named fields",
+                )
+            })?
+            .to_string()
+            .replace("_", " ");
 
         let attributes = CacheAttributes::from(f)?;
-        let name = attributes
-            .rename
-            .unwrap_or_else(|| field_name.as_ref().unwrap().to_string().replace("_", " "));
+        let name = attributes.rename.unwrap_or(default_name);
 
-        let display = attributes.display.unwrap_or_else(|| {
+        let display: syn::Path = attributes.display.unwrap_or_else(|| {
             if is_pathbuf(&f.ty) {
                 syn::parse_str("std::path::Path::display")
                     .expect("PathBuf::display parses as a syn::Path")
