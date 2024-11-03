@@ -29,7 +29,7 @@ enum Key {
 /// Attributes are parsed into this struct using `CacheAttributes::parse_all` and then that
 /// information is used to build the diff comparison.
 #[derive(Debug, PartialEq, Eq, Default)]
-pub(crate) struct CacheAttributes {
+pub(crate) struct CacheDiffAttributes {
     /// When present indicates the given string should be used as a name instead of the field name
     pub(crate) rename: Option<String>,
 
@@ -40,28 +40,28 @@ pub(crate) struct CacheAttributes {
     pub(crate) ignore: Option<()>,
 }
 
-impl CacheAttributes {
+impl CacheDiffAttributes {
     pub(crate) fn from(field: &Field) -> syn::Result<Self> {
         if let Some(attributes) = field
             .attrs
             .iter()
             .find(|&attr| attr.path().is_ident("cache_diff"))
         {
-            CacheAttributes::parse_all(attributes)
+            CacheDiffAttributes::parse_all(attributes)
         } else {
-            Ok(CacheAttributes::default())
+            Ok(CacheDiffAttributes::default())
         }
     }
 
     /// Parse all attributes inside of `#[cache_diff(...)]` and return a single CacheAttributes value
     fn parse_all(input: &Attribute) -> syn::Result<Self> {
-        let mut attribute = CacheAttributes::default();
+        let mut attribute = CacheDiffAttributes::default();
 
         match &input.meta {
             syn::Meta::List(meta_list) => {
-                for attr in meta_list
-                    .parse_args_with(Punctuated::<CacheAttributes, Token![,]>::parse_terminated)?
-                {
+                for attr in meta_list.parse_args_with(
+                    Punctuated::<CacheDiffAttributes, Token![,]>::parse_terminated,
+                )? {
                     if let Some(value) = attr.rename {
                         attribute.rename = Some(value);
                     }
@@ -82,12 +82,12 @@ impl CacheAttributes {
     }
 }
 
-impl syn::parse::Parse for CacheAttributes {
+impl syn::parse::Parse for CacheDiffAttributes {
     // Parse a single attribute inside of a `#[cache_diff(...)]` attribute
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let name: Ident = input.parse()?;
         let name_str = name.to_string();
-        let mut attribute = CacheAttributes::default();
+        let mut attribute = CacheDiffAttributes::default();
         match Key::from_str(&name_str).map_err(|_| {
             syn::Error::new(
                 name.span(),
@@ -126,11 +126,11 @@ mod test {
         let input = syn::parse_quote! {
             #[cache_diff(rename="Ruby version")]
         };
-        let expected = CacheAttributes {
+        let expected = CacheDiffAttributes {
             rename: Some("Ruby version".to_string()),
             ..Default::default()
         };
-        assert_eq!(CacheAttributes::parse_all(&input).unwrap(), expected);
+        assert_eq!(CacheDiffAttributes::parse_all(&input).unwrap(), expected);
     }
 
     #[test]
@@ -138,11 +138,11 @@ mod test {
         let input = syn::parse_quote! {
             #[cache_diff(display = my_function)]
         };
-        let expected = CacheAttributes {
+        let expected = CacheDiffAttributes {
             display: Some(syn::parse_str("my_function").unwrap()),
             ..Default::default()
         };
-        assert_eq!(CacheAttributes::parse_all(&input).unwrap(), expected);
+        assert_eq!(CacheDiffAttributes::parse_all(&input).unwrap(), expected);
     }
 
     #[test]
@@ -150,11 +150,11 @@ mod test {
         let input = syn::parse_quote! {
             #[cache_diff(ignore)]
         };
-        let expected = CacheAttributes {
+        let expected = CacheDiffAttributes {
             ignore: Some(()),
             ..Default::default()
         };
-        assert_eq!(CacheAttributes::parse_all(&input).unwrap(), expected);
+        assert_eq!(CacheDiffAttributes::parse_all(&input).unwrap(), expected);
     }
 
     #[test]
@@ -162,7 +162,7 @@ mod test {
         let input = syn::parse_quote! {
             #[cache_diff(unknown = "IDK")]
         };
-        let result = CacheAttributes::parse_all(&input);
+        let result = CacheDiffAttributes::parse_all(&input);
         assert!(result.is_err(), "Expected an error, got {:?}", result);
         assert_eq!(
             format!("{}", result.err().unwrap()),
