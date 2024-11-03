@@ -98,15 +98,22 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         }
     }
 
-    Ok(quote! {
-        #[allow(unused_extern_crates, clippy::useless_attribute)]
-        extern crate cache_diff as _cache_diff;
-        impl _cache_diff::CacheDiff for #struct_ident {
-            fn diff(&self, old: &Self) -> Vec<String> {
-                let mut differences = Vec::new();
-                #(#comparisons)*
-                differences
+    if comparisons.is_empty() {
+        Err(syn::Error::new(
+            struct_ident.span(),
+            "No fields to compare for CacheDiff, ensure struct has at least one named field that isn't `cache_diff(ignore)`-d",
+        ))
+    } else {
+        Ok(quote! {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate cache_diff as _cache_diff;
+            impl _cache_diff::CacheDiff for #struct_ident {
+                fn diff(&self, old: &Self) -> Vec<String> {
+                    let mut differences = Vec::new();
+                    #(#comparisons)*
+                    differences
+                }
             }
-        }
-    })
+        })
+    }
 }
