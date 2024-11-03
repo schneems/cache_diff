@@ -16,7 +16,7 @@ use syn::{DataStruct, DeriveInput, Field, FieldsNamed, Ident, PathArguments};
 /// version: String,
 /// ```
 struct CacheDiffField {
-    field_ident: Ident,
+    field_identifier: Ident,
     name: String,
     display_fn: syn::Path,
 }
@@ -26,7 +26,7 @@ impl CacheDiffField {
         if attributes.ignore.is_some() {
             Ok(None)
         } else {
-            let field_ident = field.ident.clone().ok_or_else(|| {
+            let field_identifier = field.ident.clone().ok_or_else(|| {
                 syn::Error::new(
                     field.span(),
                     "CacheDiff can only be used on structs with named fields",
@@ -34,7 +34,7 @@ impl CacheDiffField {
             })?;
             let name = attributes
                 .rename
-                .unwrap_or_else(&|| field_ident.to_string().replace("_", " "));
+                .unwrap_or_else(&|| field_identifier.to_string().replace("_", " "));
             let display_fn: syn::Path = attributes.display.unwrap_or_else(|| {
                 if is_pathbuf(&field.ty) {
                     syn::parse_str("std::path::Path::display")
@@ -46,7 +46,7 @@ impl CacheDiffField {
             });
 
             Ok(Some(CacheDiffField {
-                field_ident,
+                field_identifier,
                 name,
                 display_fn,
             }))
@@ -65,7 +65,7 @@ fn is_pathbuf(ty: &syn::Type) -> bool {
 
 pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
     let ast: DeriveInput = syn::parse2(item).unwrap();
-    let struct_ident = ast.ident;
+    let struct_identifier = ast.ident;
     let fields = match ast.data {
         Struct(DataStruct {
             fields: Named(FieldsNamed { ref named, .. }),
@@ -79,7 +79,7 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
         let field = CacheDiffField::new(f, attributes)?;
 
         if let Some(CacheDiffField {
-            field_ident,
+            field_identifier: field_ident,
             name,
             display_fn,
         }) = field
@@ -100,14 +100,14 @@ pub fn create_cache_diff(item: TokenStream) -> syn::Result<TokenStream> {
 
     if comparisons.is_empty() {
         Err(syn::Error::new(
-            struct_ident.span(),
+            struct_identifier.span(),
             "No fields to compare for CacheDiff, ensure struct has at least one named field that isn't `cache_diff(ignore)`-d",
         ))
     } else {
         Ok(quote! {
             #[allow(unused_extern_crates, clippy::useless_attribute)]
             extern crate cache_diff as _cache_diff;
-            impl _cache_diff::CacheDiff for #struct_ident {
+            impl _cache_diff::CacheDiff for #struct_identifier {
                 fn diff(&self, old: &Self) -> Vec<String> {
                     let mut differences = Vec::new();
                     #(#comparisons)*
