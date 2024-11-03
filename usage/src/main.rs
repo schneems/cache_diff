@@ -1,9 +1,13 @@
 use cache_diff::CacheDiff;
 
 #[derive(CacheDiff)]
-struct Hello {}
+struct Hello {
+    name: String,
+}
 fn main() {
-    let _ = Hello {};
+    let _ = Hello {
+        name: "world".to_string(),
+    };
     println!("Hello, world!");
 }
 
