@@ -34,7 +34,7 @@ impl CacheDiffField {
             })?;
             let name = attributes
                 .rename
-                .unwrap_or_else(&|| field_identifier.to_string().replace("_", " "));
+                .unwrap_or_else(|| field_identifier.to_string().replace("_", " "));
             let display_fn: syn::Path = attributes.display.unwrap_or_else(|| {
                 if is_pathbuf(&field.ty) {
                     syn::parse_str("std::path::Path::display")
