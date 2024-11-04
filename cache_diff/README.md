@@ -82,9 +82,7 @@ impl CacheDiff for Metadata {
    fn diff(&self, old: &Self) -> Vec<String> {
         let mut diff = vec![];
         // This evaluation logic differs from the derive macro
-        if self.custom_compare_eq(old) {
-           return diff;
-        } else {
+        if !self.custom_compare_eq(old) {
             diff.push(format!("Cache is different ({old:?} to {self:?})"));
         }
 
