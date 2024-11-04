@@ -4,8 +4,7 @@
     To update: edit `cargo_diff/src/lib.rs` then run:
 
     ```
-    $ cd cargo_diff
-    $ cargo rdme > README.md
+    $ cargo rdme -w cache_diff
     ```
 -->
 
