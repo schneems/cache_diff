@@ -54,6 +54,7 @@ Use GitHub Issues page to submit issues, enhancement requests and discuss ideas.
 # Contribution Checklist
 
 - [x] Clean, simple, well styled code
+- [x] Update the CHANGELOG.md if the effects of the PR are observable by users of this repo. Otherwise apply the `skip changelog` label to the PR once opened.
 - [x] Commits should be atomic and messages must be descriptive. Related issues should be mentioned by Issue number.
 - [x] Comments
   - Module-level & function-level comments.
