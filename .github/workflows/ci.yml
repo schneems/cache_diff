@@ -51,5 +51,7 @@ jobs:
         run: rustup update
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.7.3
+      - name: Install cargo readme
+        run: cargo install cargo-rdme
       - name: Check if README.md is up-to-date (see README.md for updating instructions)
         run: cargo rdme -w cache_diff --check
