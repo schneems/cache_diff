@@ -190,3 +190,23 @@ assert_eq!(diff.join(" "), "version (`custom 3.3.0` to `custom 3.4.0`)");
 ```
 
 <!-- cargo-rdme end -->
+
+## Releasing
+
+Releases can be performed via `cargo release`:
+
+```
+$ cargo install cargo-release
+```
+
+Release readiness for all crates can be checked by running:
+
+```
+$ cargo release --workspace --dry-run
+```
+
+When satisfied, contributors with permissions can release by running:
+
+```
+$ cargo release --workspace --execute
+```
