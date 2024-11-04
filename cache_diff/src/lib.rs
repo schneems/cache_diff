@@ -148,7 +148,6 @@
 //! ```rust
 //! use cache_diff::CacheDiff;
 //!
-//!
 //! #[derive(CacheDiff)]
 //! struct Metadata {
 //!     #[cache_diff(display = my_function)]
