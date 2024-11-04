@@ -27,7 +27,7 @@
 //! $ cargo add cache_diff
 //! ```
 //!
-//! For ANSI colored output, add the `bullet_stream` feature:
+//! For ANSI colored output, add the [`bullet_stream`](https://github.com/heroku-buildpacks/bullet_stream) feature:
 //!
 //! ```shell
 //! $ cargo add cache_diff --features bullet_stream
@@ -51,7 +51,7 @@
 //! assert_eq!(diff.join(" "), "version (`3.3.0` to `3.4.0`)");
 //! ```
 //!
-//! Struct fields must implement `PartialEq` and `Display`. Also note that `PartialEq` on the top level
+//! Struct fields must implement [`PartialEq`](std::cmp::PartialEq) and [`Display`](std::fmt::Display). Also note that [`PartialEq`](std::cmp::PartialEq) on the top level
 //! cache struct is not  used or required. If you want to customize equality logic, you can implement
 //! the `CacheDiff` trait manually:
 //!
@@ -141,13 +141,13 @@
 //!
 //! ## Handle structs missing display
 //!
-//! Not all structs implement the `Display` trait, for example `std::path::PathBuf` requires that you call `display()` on it.
+//! Not all structs implement the [`Display`](std::fmt::Display) trait, for example [`std::path::PathBuf`](std::path::PathBuf) requires that you call `display()` on it.
 //!
 //! The `#[derive(CacheDiff)]` macro will automatically handle the following conversions for you:
 //!
-//! - `std::path::PathBuf` (via [`std::path::Path::display`](::std::path::Path::display))
+//! - `std::path::PathBuf` (via [`std::path::Path::display`](std::path::Path::display))
 //!
-//! However, if you have a custom struct that does not implement `Display`, you can specify a function to call instead:
+//! However, if you have a custom struct that does not implement [`Display`](std::fmt::Display), you can specify a function to call instead:
 //!
 //! ```rust
 //! use cache_diff::CacheDiff;
