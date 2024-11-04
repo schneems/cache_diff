@@ -156,12 +156,15 @@ assert!(diff.is_empty());
 ### Handle structs missing display
 
 Not all structs implement the `Display` trait, for example `std::path::PathBuf` requires that you call `display()` on it.
-The `#[derive(CacheDiff)]` macro will automatically handle `std::path::PathBuf` for you, however if you have a custom struct
-that does not implement `Display`, you can specify a function to call instead:
+
+The `#[derive(CacheDiff)]` macro will automatically handle the following conversions for you:
+
+- `std::path::PathBuf` (via [`std::path::Path::display`](https://doc.rust-lang.org/stable/std/path/struct.Path.html#method.display))
+
+However, if you have a custom struct that does not implement `Display`, you can specify a function to call instead:
 
 ```rust
 use cache_diff::CacheDiff;
-
 
 #[derive(CacheDiff)]
 struct Metadata {
