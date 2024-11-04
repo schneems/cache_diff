@@ -53,7 +53,37 @@
 //!
 //! Struct fields must implement `PartialEq` and `Display`. Also note that `PartialEq` on the top level
 //! cache struct is not  used or required. If you want to customize equality logic, you can implement
-//! the `CacheDiff` trait manually.
+//! the `CacheDiff` trait manually:
+//!
+//! ```rust
+//! use cache_diff::CacheDiff;
+//!
+//! #[derive(Debug)]
+//! struct Metadata {
+//!     version: String,
+//! }
+//!
+//! // Implement the trait manually
+//! impl CacheDiff for Metadata {
+//!    fn diff(&self, old: &Self) -> Vec<String> {
+//!         let mut diff = vec![];
+//!         // This evaluation logic differs from the derive macro
+//!         if self.custom_compare_eq(old) {
+//!            return diff;
+//!         } else {
+//!             diff.push(format!("Cache is different ({old:?} to {self:?})"));
+//!         }
+//!
+//!         diff
+//!    }
+//! }
+//!
+//! impl Metadata {
+//!   fn custom_compare_eq(&self, old: &Self) -> bool {
+//!       todo!()
+//!   }
+//! }
+//! ```
 //!
 //! ## Ordering
 //!
