@@ -15,6 +15,8 @@
 
 # cache_diff
 
+MOVED TO https://github.com/heroku-buildpacks/cache_diff
+
 <!-- cargo-rdme start -->
 
 Generate clean, human readable diffs between two cache structs
